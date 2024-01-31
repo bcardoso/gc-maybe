@@ -54,4 +54,4 @@ Then, in my config file, with numbers that seems to better fit my machine:
 
 - [[https://emacsconf.org/2023/talks/gc/][EmacsConf - 2023 - talks - emacs-gc-stats: Does garbage collection actually slow down Emacs?]]
 
-  - [[https://old.reddit.com/r/emacs/comments/18eadk5/results_please_help_collecting_statistics_to/][[Results] Please help collecting statistics to optimize Emacs GC defaults : emacs]]
+  - [[https://old.reddit.com/r/emacs/comments/18eadk5/results_please_help_collecting_statistics_to/][(Results) Please help collecting statistics to optimize Emacs GC defaults : emacs]]
