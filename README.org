@@ -1,0 +1,57 @@
+#+AUTHOR: Bruno Cardoso <cardoso.bc@gmail.com>
+#+DATE: 2024-01-28
+#+STARTUP: indent content
+
+* gc-maybe (or the Garbage Collector /Maybe/ Trick)
+
+I have used [[https://gitlab.com/koral/gcmh][GCMH]] (the /Garbage Collector Magic Hack/) for many years. It's great.
+
+/GCMH/ hooks itself in pre/post-command hooks. It (re)sets its idle timer on every command, which seems to be a good strategy, but also feels [[https://gitlab.com/koral/gcmh/-/issues/7][a bit too much]].
+
+Conversely, all =gc-maybe-mode= does is this:
+
+- with a predefined idle timer (default is 5 seconds), call =garbage-collect-maybe= (from Emacs 28.1 or above) with a factor based on the current =gc-cons-percentage=, so it garbage collects if needed;
+
+- add hooks to the =minibuffer-setup-hook= (raising the GC threshold), =minibuffer-exit-hook= (restoring the GC threshold), and the =post-gc-hook= (for optional stats in a buffer);
+
+That's it. It is pretty much the same GCMH /hack/, but as a cheap /trick/.
+
+With custom advices, we can raise the threshold (=gc-maybe-raise-threshold= or =gc-maybe-raise-threshold-briefly=) for known costly functions; with a "restore" timer, we reset to defaults shortly after raising them (=gc-maybe-restore-threshold=).
+
+
+* Setup
+
+I'm doing this in the very beginning of my =init.el= file (before bootstrapping [[https://github.com/radian-software/straight.el][straight.el]]), so adapt accordingly:
+
+#+begin_src emacs-lisp
+(load "~/.emacs.d/site-lisp/gc-maybe/gc-maybe.el" nil t)
+(gc-maybe-raise-threshold)
+(add-hook 'after-init-hook 'gc-maybe-restore-threshold 99)
+#+end_src
+
+Then, in my config file, with numbers that seems to better fit my machine:
+
+#+begin_src emacs-lisp
+(use-package gc-maybe
+  :straight (:local-repo "~/.emacs.d/site-lisp/gc-maybe")
+  :init
+  (setopt gc-maybe-threshold-default (* 16 1024 1024)) ; 16 MiB
+  (setopt gc-maybe-percentage-default 0.2)
+  (gc-maybe-mode +1) ; set minibuffer hooks and idle timer
+  :config
+  ;; optionally log GCs in a buffer
+  (setopt gc-maybe-log-stats t)
+  ;; example function advice
+  (advice-add 'save-buffers-kill-emacs :before #'gc-maybe-raise-threshold))
+#+end_src
+
+
+* Related
+
+- [[https://gitlab.com/koral/gcmh][GCMH]]: the Garbage Collector Magic Hack
+
+  - [2019-03-11]: [[https://akrl.sdf.org/#orgc15a10d][The original magic Emacs garbage collection hack]]
+
+- [[https://emacsconf.org/2023/talks/gc/][EmacsConf - 2023 - talks - emacs-gc-stats: Does garbage collection actually slow down Emacs?]]
+
+  - [[https://old.reddit.com/r/emacs/comments/18eadk5/results_please_help_collecting_statistics_to/][[Results] Please help collecting statistics to optimize Emacs GC defaults : emacs]]
