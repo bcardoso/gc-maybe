@@ -107,6 +107,12 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
 
 (defvar gc-maybe--last-elapsed gc-elapsed "Last GC elapsed time.")
 
+(defun gc-maybe-log-average (elapsed count)
+  "Return the average GC time for ELAPSED and COUNT."
+  (condition-case nil
+      (/ elapsed count)
+    (arith-error elapsed)))
+
 (defun gc-maybe-log ()
   "Log GC statistics."
   (when gc-maybe-log-stats
@@ -114,7 +120,7 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
       (insert (concat (format-time-string "[%F %T] " (current-time))
                       (format "GC took %.3fs, average is %.3fs in %s GCs\n"
                               (- gc-elapsed (or gc-maybe--last-elapsed 0))
-                              (/ gc-elapsed gcs-done)
+                              (gc-maybe-log-average gc-elapsed gcs-done)
                               gcs-done))))
     (setq gc-maybe--last-elapsed gc-elapsed)))
 
@@ -126,7 +132,7 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
               "[GC] Threshold: %s / Percentage: %s / Avg: %.3fs / GCs: %s"
               (file-size-human-readable gc-cons-threshold 'iec " ")
               gc-cons-percentage
-              (/ gc-elapsed gcs-done)
+              (gc-maybe-log-average gc-elapsed gcs-done)
               gcs-done)))
     (gc-maybe-with-buffer
       (insert (concat "-----\n" msg "\n-----\n")))
