@@ -114,8 +114,8 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
       (insert (concat (format-time-string "[%F %T] " (current-time))
                       (format "GC took %.3fs, average is %.3fs in %s GCs\n"
                               (- gc-elapsed (or gc-maybe--last-elapsed 0))
-                              (/ gc-elapsed (1+ gcs-done))
-                              (1+ gcs-done)))))
+                              (/ gc-elapsed gcs-done)
+                              gcs-done))))
     (setq gc-maybe--last-elapsed gc-elapsed)))
 
 ;;;###autoload
