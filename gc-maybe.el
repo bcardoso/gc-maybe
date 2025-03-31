@@ -1,11 +1,11 @@
 ;;; gc-maybe.el --- GC Maybe Trick -*- lexical-binding: t -*-
 
-;; Copyright (C) 2024 Bruno Cardoso
+;; Copyright (C) 2024-2025 Bruno Cardoso
 
 ;; Author: Bruno Cardoso <cardoso.bc@gmail.com>
 ;; URL: https://github.com/bcardoso/gc-maybe
-;; Version: 0.1
-;; Package-Requires: ((emacs "29.2"))
+;; Version: 0.2
+;; Package-Requires: ((emacs "30.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -29,71 +29,66 @@
 
 ;;; Code:
 
-(defcustom gc-maybe-threshold-max (* 512 1024 1024) ;; 512MB
+(defgroup gc-maybe nil
+  "Group for `gc-maybe' customizations."
+  :group 'alloc)
+
+(defcustom gc-maybe-threshold-max (* 512 1024 1024)
   "Maximum number of bytes of consing between garbage collections."
-  :group 'alloc
   :type 'integer)
 
 (defcustom gc-maybe-percentage-max 0.6
   "Maximum portion of the heap used for allocation."
-  :group 'alloc
   :type 'float)
 
 (defcustom gc-maybe-threshold-default gc-cons-threshold
   "Number of bytes of consing between garbage collections."
-  :group 'alloc
   :type 'integer)
 
 (defcustom gc-maybe-percentage-default gc-cons-percentage
   "Portion of the heap used for allocation."
-  :group 'alloc
   :type 'float)
 
 (defcustom gc-maybe-mode-idle 5
   "Idle seconds to run `gc-maybe' when `gc-maybe-mode' is on."
-  :group 'alloc
   :type 'integer)
 
 (defcustom gc-maybe-restore-idle 3
   "Idle seconds to restore GC raised by `gc-maybe-raise-threshold-briefly'."
-  :group 'alloc
   :type 'integer)
 
 (defcustom gc-maybe-log-stats nil
   "Log GC stats in `gc-maybe-log-buffer'."
-  :group 'alloc
   :type 'boolean)
 
 (defcustom gc-maybe-log-buffer "*gc-log*"
   "GC log buffer."
-  :group 'alloc
   :type 'string)
 
-;;;###autoload
 (defun gc-maybe-raise-threshold (&rest _)
   "Raise GC threshold."
   (setq gc-cons-threshold  gc-maybe-threshold-max)
   (setq gc-cons-percentage gc-maybe-percentage-max))
 
-;;;###autoload
 (defun gc-maybe-raise-threshold-briefly (&rest _)
-  "Raise GC threshold briefly. Restore it after `gc-maybe-restore-idle' seconds."
+  "Raise GC threshold briefly.
+Restore it after `gc-maybe-restore-idle' seconds."
   (gc-maybe-raise-threshold)
   (cancel-function-timers #'gc-maybe-restore-threshold)
   (run-with-idle-timer gc-maybe-restore-idle nil
                        #'gc-maybe-restore-threshold))
 
-;;;###autoload
 (defun gc-maybe-restore-threshold (&rest _)
   "Restore GC to saner values."
   (setq gc-cons-threshold  gc-maybe-threshold-default)
   (setq gc-cons-percentage gc-maybe-percentage-default))
 
-;;;###autoload
 (defun gc-maybe ()
   "Maybe GC.
 Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
-  (garbage-collect-maybe (round (/ 1 gc-cons-percentage))))
+  (and (garbage-collect-maybe (round (/ 1 gc-cons-percentage)))
+       gc-maybe-log-stats
+       (gc-maybe-log)))
 
 (defmacro gc-maybe-with-buffer (&rest body)
   "Insert BODY in `gc-maybe-log-buffer'."
@@ -105,7 +100,8 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
      ,@body
      (setq-local buffer-read-only t)))
 
-(defvar gc-maybe--last-elapsed gc-elapsed "Last GC elapsed time.")
+(defvar gc-maybe-log--last-elapsed gc-elapsed
+  "Last GC elapsed time.")
 
 (defun gc-maybe-log-average ()
   "Return the average GC time."
@@ -117,12 +113,13 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
   "Log GC statistics."
   (when gc-maybe-log-stats
     (gc-maybe-with-buffer
-      (insert (concat (format-time-string "[%F %T] " (current-time))
-                      (format "GC took %.3fs, average is %.3fs in %s GCs\n"
-                              (- gc-elapsed (or gc-maybe--last-elapsed 0))
-                              (gc-maybe-log-average)
-                              gcs-done))))
-    (setq gc-maybe--last-elapsed gc-elapsed)))
+      (insert
+       (concat (format-time-string "[%F %T] " (current-time))
+               (format "GC took %.3fs, average is %.3fs in %s GCs\n"
+                       (- gc-elapsed (or gc-maybe-log--last-elapsed 0))
+                       (gc-maybe-log-average)
+                       gcs-done))))
+    (setq gc-maybe-log--last-elapsed gc-elapsed)))
 
 ;;;###autoload
 (defun gc-maybe-log-current ()
@@ -161,7 +158,8 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
              (file-size-human-readable (* used size) 'iec " ")
              (file-size-human-readable (* (or free 0) size) 'iec " ")
              (file-size-human-readable (+ (* used size)
-                                          (* (or free 0) size)) 'iec " ")))))
+                                          (* (or free 0) size))
+                                       'iec " ")))))
        mem)
       (insert (concat "\n\n" separator "\n"))))
   (pop-to-buffer gc-maybe-log-buffer)
@@ -170,14 +168,13 @@ Run `garbage-collect-maybe' with factor as 1/`gc-cons-percentage'."
 ;;;###autoload
 (define-minor-mode gc-maybe-mode
   "Minor mode for GC strategy."
-  :global t :lighter nil :group 'alloc
+  :global t
+  :lighter nil
   (if gc-maybe-mode
       (progn
-        (when gc-maybe-log-stats (add-hook 'post-gc-hook #'gc-maybe-log))
         (add-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold -90)
         (add-hook 'minibuffer-exit-hook  #'gc-maybe-restore-threshold 90)
         (run-with-idle-timer gc-maybe-mode-idle t #'gc-maybe))
-    (remove-hook 'post-gc-hook #'gc-maybe-log)
     (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold)
     (remove-hook 'minibuffer-exit-hook  #'gc-maybe-restore-threshold)
     (cancel-function-timers #'gc-maybe)))
