@@ -50,8 +50,10 @@ Then, in my config file, with numbers that seems to better fit my machine:
 
 - [[https://gitlab.com/koral/gcmh][GCMH]]: the Garbage Collector Magic Hack
 
-  - [2019-03-11]: [[https://akrl.sdf.org/#orgc15a10d][The original magic Emacs garbage collection hack]]
+  - [2019-03-11] [[https://akrl.sdf.org/#orgc15a10d][The original magic Emacs garbage collection hack]]
 
 - [[https://emacsconf.org/2023/talks/gc/][EmacsConf - 2023 - talks - emacs-gc-stats: Does garbage collection actually slow down Emacs?]]
 
   - [[https://old.reddit.com/r/emacs/comments/18eadk5/results_please_help_collecting_statistics_to/][(Results) Please help collecting statistics to optimize Emacs GC defaults : emacs]]
+
+- [2021-03-07] [[https://mail.gnu.org/archive/html/emacs-devel/2021-03/msg00393.html][Opportunistic GC]] on [[https://lists.gnu.org/archive/html/emacs-devel/][emacs-devel]] mailing list
