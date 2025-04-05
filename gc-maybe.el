@@ -51,11 +51,11 @@
   "Maximum portion of the heap used for allocation."
   :type 'float)
 
-(defcustom gc-maybe-idle-delay 5
+(defcustom gc-maybe-idle-delay 8
   "Idle time in seconds to run `gc-maybe' when `gc-maybe-mode' is on."
   :type 'integer)
 
-(defcustom gc-maybe-idle-restore 3
+(defcustom gc-maybe-idle-restore 5
   "Idle time in seconds to restore briefly raised GC values to defaults."
   :type 'integer)
 

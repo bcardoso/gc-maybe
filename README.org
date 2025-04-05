@@ -10,7 +10,7 @@ I have used [[https://gitlab.com/koral/gcmh][GCMH]] (the /Garbage Collector Magi
 
 Conversely, all that =gc-maybe-mode= does is this:
 
-- With an idle timer (default is 5 seconds), call =garbage-collect-maybe= (from Emacs 28.1 or above) with a factor based on the current =gc-cons-percentage=, so it garbage collects only if needed;
+- With an idle timer (default is 8 seconds), call =garbage-collect-maybe= (from Emacs 28.1 or above) with a factor based on the current =gc-cons-percentage=, so it garbage collects only if needed;
 
 - Add hooks to =minibuffer-setup-hook=, to raise the GC cons threshold, and to =minibuffer-exit-hook=, to restore the GC cons threshold.
 
@@ -33,8 +33,8 @@ See =M-x customize-group RET gc-maybe= for all user options.
   ;; Default values
   (setopt gc-maybe-cons-threshold (* 16 1024 1024))
   (setopt gc-maybe-cons-percentage 0.2)
-  (setopt gc-maybe-idle-delay 5)
-  (setopt gc-maybe-idle-restore 3)
+  (setopt gc-maybe-idle-delay 8)
+  (setopt gc-maybe-idle-restore 5)
 
   ;; Enable mode to set the idle timer and minibuffer hooks
   (gc-maybe-mode +1)
