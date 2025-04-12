@@ -99,7 +99,8 @@ Set `gc-cons-threshold' and `gc-cons-percentage' to their standard values."
   "Raise GC cons threshold briefly.
 Restore it after `gc-maybe-idle-restore' seconds."
   (gc-maybe-raise-threshold)
-  (cancel-timer gc-maybe-raise-threshold-timer)
+  (and (timerp gc-maybe-raise-threshold-timer)
+       (cancel-timer gc-maybe-raise-threshold-timer))
   (setq gc-maybe-raise-threshold-timer
         (run-with-idle-timer gc-maybe-idle-restore nil
                              #'gc-maybe-restore-threshold)))
