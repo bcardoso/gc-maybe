@@ -71,6 +71,11 @@
   "GC log buffer."
   :type 'string)
 
+(defcustom gc-maybe-opportunistic-raise nil
+  "List of functions to be adviced with `gc-maybe-raise-threshold-briefly'.
+The advice is applied when `gc-maybe-opportunistic-mode' is enabled."
+  :type 'sexp)
+
 
 ;;;; Functions
 
@@ -212,12 +217,30 @@ Restore it after `gc-maybe-idle-restore' seconds."
   :lighter nil
   (if gc-maybe-mode
       (progn
+        (gc-maybe-opportunistic-mode -1)
         (add-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold -90)
         (add-hook 'minibuffer-exit-hook  #'gc-maybe-restore-threshold 90)
         (run-with-idle-timer gc-maybe-idle-delay t #'gc-maybe))
     (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold)
     (remove-hook 'minibuffer-exit-hook  #'gc-maybe-restore-threshold)
     (cancel-function-timers #'gc-maybe)))
+
+;;;###autoload
+(define-minor-mode gc-maybe-opportunistic-mode
+  "Minor mode for opportunistic GC strategy."
+  :global t
+  :lighter nil
+  (if gc-maybe-opportunistic-mode
+      (progn
+        (gc-maybe-mode -1)
+        (add-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold-briefly)
+        (dolist (fn gc-maybe-opportunistic-raise)
+          (advice-add fn :before #'gc-maybe-raise-threshold-briefly))
+        (run-with-idle-timer gc-maybe-idle-delay t #'garbage-collect))
+    (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold)
+    (dolist (fn gc-maybe-opportunistic-raise)
+      (advice-remove fn #'gc-maybe-raise-threshold-briefly))
+    (cancel-function-timers #'garbage-collect)))
 
 
 (provide 'gc-maybe)
