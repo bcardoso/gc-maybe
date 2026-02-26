@@ -226,9 +226,11 @@ Restore it after `gc-maybe-idle-restore' seconds."
   (unless (frame-focus-state) (gc-maybe--now)))
 
 
+;;;;;; Main GC strategy
+
 ;;;###autoload
 (define-minor-mode gc-maybe-mode
-  "Minor mode for GC strategy."
+  "Minor mode for main GC strategy."
   :global t
   :lighter nil
   (if gc-maybe-mode
@@ -241,6 +243,9 @@ Restore it after `gc-maybe-idle-restore' seconds."
     (remove-hook 'minibuffer-exit-hook  #'gc-maybe-restore-threshold)
     (cancel-function-timers #'gc-maybe)))
 
+
+;;;;;; Alternative GC strategy
+
 ;;;###autoload
 (define-minor-mode gc-maybe-opportunistic-mode
   "Minor mode for opportunistic GC strategy."
@@ -252,11 +257,13 @@ Restore it after `gc-maybe-idle-restore' seconds."
         (add-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold-briefly)
         (dolist (fn gc-maybe-opportunistic-raise)
           (advice-add fn :before #'gc-maybe-raise-threshold-briefly))
-        (run-with-idle-timer gc-maybe-idle-delay t #'garbage-collect))
+        (add-function :after after-focus-change-function #'gc-maybe)
+        (run-with-idle-timer gc-maybe-idle-delay t #'gc-maybe--now))
     (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold)
     (dolist (fn gc-maybe-opportunistic-raise)
       (advice-remove fn #'gc-maybe-raise-threshold-briefly))
-    (cancel-function-timers #'garbage-collect)))
+    (remove-function after-focus-change-function #'gc-maybe)
+    (cancel-function-timers #'gc-maybe--now)))
 
 
 (provide 'gc-maybe)
