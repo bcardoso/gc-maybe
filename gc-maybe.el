@@ -213,6 +213,20 @@ Restore it after `gc-maybe-idle-restore' seconds."
      (garbage-collect-maybe (round (/ 1 gc-cons-percentage))))))
 
 ;;;###autoload
+(defun gc-maybe--now ()
+  "GC unconditionally."
+  (gc-maybe--run #'garbage-collect))
+
+(defun gc-maybe--on-frame-focused ()
+  "GC when frame is focused."
+  (when (frame-focus-state) (gc-maybe--now)))
+
+(defun gc-maybe--on-frame-unfocused ()
+  "GC when frame is unfocused."
+  (unless (frame-focus-state) (gc-maybe--now)))
+
+
+;;;###autoload
 (define-minor-mode gc-maybe-mode
   "Minor mode for GC strategy."
   :global t
