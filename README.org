@@ -22,6 +22,8 @@ When raising the threshold /briefly/, a "restore" timer is set, so it resets to 
 
 See =M-x customize-group RET gc-maybe= for all user options.
 
+Alternatively, the =gc-maybe-opportunistic-mode= employs an "opportunistic" strategy by briefly raising the GC threshold for the functions listed in =gc-maybe-opportunistic-raise= and by triggering GC on focus changes.
+
 
 * Setup
 
@@ -38,6 +40,9 @@ See =M-x customize-group RET gc-maybe= for all user options.
 
   ;; Enable mode to set the idle timer and minibuffer hooks
   (gc-maybe-mode +1)
+
+  ;; Or enable the alternative strategy mode
+  ;; (gc-maybe-opportunistic-mode +1)
 
   ;; Optionally log GC data in a buffer
   ;; (setopt gc-maybe-log-stats-in-buffer t)
