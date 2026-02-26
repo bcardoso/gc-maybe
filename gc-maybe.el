@@ -126,7 +126,7 @@ Restore it after `gc-maybe-idle-restore' seconds."
   "Return the GC log message string."
   (concat
    (format-time-string "[%F %T] " (current-time))
-   (format "GC took %.3fs, avg is %.3fs in %s GCs"
+   (format "GC took %.3fs, average is %.3fs in %s GCs"
            gc-maybe-last-gc-time (gc-maybe-average) gcs-done)))
 
 (defun gc-maybe-log-display ()
@@ -156,7 +156,8 @@ Restore it after `gc-maybe-idle-restore' seconds."
           gcs-done)))
     (when gc-maybe-log-stats-in-buffer
       (gc-maybe-with-log-buffer
-        (insert (format "-----\n%s\n-----\n" msg))))
+        (insert (format "-----\n%s %s\n-----\n"
+                        (format-time-string "[%F %T]") msg))))
     (message msg)))
 
 ;;;###autoload
@@ -181,7 +182,8 @@ Restore it after `gc-maybe-idle-restore' seconds."
             (file-size-human-readable (+ (* used size)
                                          (* (or free 0) size))
                                       'iec " "))))
-       (garbage-collect))
+       (prog1 (garbage-collect)
+         (setq-local buffer-read-only nil)))
       (concat "\n\n-----\n"))))
   (pop-to-buffer gc-maybe-log-buffer)
   (goto-char (point-max)))
