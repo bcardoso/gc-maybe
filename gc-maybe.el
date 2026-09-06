@@ -261,7 +261,7 @@ Restore it after `gc-maybe-idle-restore' seconds."
           (advice-add fn :before #'gc-maybe-raise-threshold-briefly))
         (add-function :after after-focus-change-function #'gc-maybe)
         (run-with-idle-timer gc-maybe-idle-delay t #'gc-maybe--now))
-    (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold)
+    (remove-hook 'minibuffer-setup-hook #'gc-maybe-raise-threshold-briefly)
     (dolist (fn gc-maybe-opportunistic-raise)
       (advice-remove fn #'gc-maybe-raise-threshold-briefly))
     (remove-function after-focus-change-function #'gc-maybe)
